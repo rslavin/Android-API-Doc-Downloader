@@ -68,9 +68,13 @@ public class Downloader {
             // get page
             Document page = Jsoup.connect(url).get();
 
+            // get Class Inheritance
+            Element className = page.select("[class=\"jd-inheritance-class-cell\"").last();
+            doc.name = Jsoup.clean(className.toString(), Whitelist.none());
+
             // get Class Overview
-            Elements classOverview = page.select("[class=\"jd-descr\"]");
-            doc.setOverview(Jsoup.clean(classOverview.first().toString(), Whitelist.none()));
+            Element classOverview = page.select("[class=\"jd-descr\"]").first();
+            doc.setOverview(Jsoup.clean(classOverview.toString(), Whitelist.none()));
 
             // get Public Methods
             Elements methodsTable = page.select("[id=\"pubmethods\"] [class=\"jd-linkcol\"]");

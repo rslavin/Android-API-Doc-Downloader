@@ -33,7 +33,7 @@ public class ClassDocumentation {
 
     public void printMethods() {
         for (Map.Entry<String, String> method : publicMethods.entrySet()) {
-            System.out.println("Name: " + method.getKey() + "\nDescription: " + method.getValue());
+            System.out.println("Method: " + method.getKey() + "\nDescription: " + method.getValue());
         }
     }
 
