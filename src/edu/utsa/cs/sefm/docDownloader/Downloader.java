@@ -24,7 +24,7 @@ public class Downloader {
     private static String site = "+site:http:%2F%2Fdeveloper.android.com%2Freference%2F";
     private static String userAgent = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
     public int resultsPerQuery = 10;
-    private Map<String, SearchResult> searchResults; // query -> results
+    public Map<String, SearchResult> searchResults; // query -> results
 
     public Downloader(List<String> searchTerms) {
         this.searchResults = new HashMap<>();
