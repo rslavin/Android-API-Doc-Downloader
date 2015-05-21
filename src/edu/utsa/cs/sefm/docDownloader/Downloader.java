@@ -3,7 +3,9 @@ package edu.utsa.cs.sefm.docDownloader;
 import edu.utsa.cs.sefm.docDownloader.htmlObject.ClassDocumentation;
 import edu.utsa.cs.sefm.docDownloader.htmlObject.SearchResult;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
@@ -11,17 +13,17 @@ import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Rocky on 5/20/2015.
  */
 public class Downloader {
     private static String google = "http://www.google.com/";
-    //    private static String search = "search?q=location";
     private static String site = "+site:http:%2F%2Fdeveloper.android.com%2Freference%2F";
-    private static String total = "&num=100";
     private static String userAgent = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
-
+    public int resultsPerQuery = 10;
     private Map<String, SearchResult> searchResults; // query -> results
 
     public Downloader(List<String> searchTerms) {
@@ -34,8 +36,14 @@ public class Downloader {
     }
 
     public void download() {
-        for (Map.Entry<String, SearchResult> query : searchResults.entrySet())
+        // get results for each query
+        for (Map.Entry<String, SearchResult> query : searchResults.entrySet()) {
             searchResults.put(query.getKey(), search(query.getKey()));
+            // download each result and add them to the SearchResult object
+            for (Map.Entry<String, String> result : query.getValue().results.entrySet()) {
+                query.getValue().addPage(getDoc(result.getValue()));
+            }
+        }
     }
 
     /**
@@ -55,8 +63,49 @@ public class Downloader {
      * @return
      */
     private ClassDocumentation getDoc(String url) {
+        ClassDocumentation doc = new ClassDocumentation(url);
+        try {
+            // get page
+            Document page = Jsoup.connect(url).get();
 
-        return null;
+            // get Class Overview
+            Elements classOverview = page.select("[class=\"jd-descr\"]");
+            doc.setOverview(Jsoup.clean(classOverview.first().toString(), Whitelist.none()));
+
+            // get Public Methods
+            Elements methodsTable = page.select("[id=\"pubmethods\"] [class=\"jd-linkcol\"]");
+
+            Pattern methodNamePattern = Pattern.compile("\"*>([^>]+)<\\/a");
+            Pattern methodParametersPattern = Pattern.compile("span>(\\([^<>]+\\))");
+            Pattern methodDescriptionPattern = Pattern.compile("jd-descrdiv\">\\s*\\n(.+)<\\/div", Pattern.DOTALL);
+            for (Element rawMethod : methodsTable) {
+                // get method name
+                Matcher m = methodNamePattern.matcher(rawMethod.toString());
+                String methodName = "no name";
+                while (m.find())
+                    methodName = m.group(1);
+
+                // get method params
+                m = methodParametersPattern.matcher(rawMethod.toString());
+                String methodParam = "()";
+                while (m.find())
+                    methodParam = m.group(1);
+
+                // get method description
+                m = methodDescriptionPattern.matcher(rawMethod.toString());
+                String methodDescription = "no description";
+                while (m.find())
+                    methodDescription = m.group(1);
+
+                doc.addMethod(methodName + methodParam, Jsoup.clean(methodDescription, Whitelist.none()));
+            }
+
+        } catch (IOException e) {
+            System.err.println("Error retrieving documentation for '" + url + "'");
+            e.printStackTrace();
+        }
+
+        return doc;
     }
 
     /**
@@ -68,14 +117,15 @@ public class Downloader {
     private SearchResult search(String query) {
         SearchResult results = new SearchResult(query);
         try {
-            Elements links = Jsoup.connect(google + queryString(query) + site + total).userAgent(userAgent).referrer(google).get().select("li.g>h3>a");
+            Elements links = Jsoup.connect(google + queryString(query) + site + "&num=" + resultsPerQuery).userAgent(userAgent).referrer(google).get().select("li.g>h3>a");
 
             for (Element link : links) {
                 String title = link.text();
                 String url = link.absUrl("href");
                 url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), "UTF-8");
 
-                if (!url.startsWith("http")) {
+                // Skip packages and non http links
+                if (!url.startsWith("http") || url.contains("package-summary")) {
                     continue;
                 }
                 results.addResult(title, url);

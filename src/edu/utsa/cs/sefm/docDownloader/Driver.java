@@ -11,7 +11,6 @@ public class Driver {
     public static void main(String[] args) {
         List<String> searchTerms = new ArrayList<>();
         searchTerms.add("location");
-        searchTerms.add("sms messages");
 
         Downloader downloader = new Downloader(searchTerms);
 
