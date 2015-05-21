@@ -1,12 +1,22 @@
 package edu.utsa.cs.sefm.docDownloader;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Rocky on 5/20/2015.
  */
 public class Driver {
 
     public static void main(String[] args) {
-        Downloader.download();
+        List<String> searchTerms = new ArrayList<>();
+        searchTerms.add("location");
+        searchTerms.add("sms messages");
+
+        Downloader downloader = new Downloader(searchTerms);
+
+        downloader.download();
+        downloader.printSearchResults();
     }
 
 }
