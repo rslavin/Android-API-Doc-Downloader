@@ -10,6 +10,7 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,9 +26,12 @@ public class Downloader {
     private static String userAgent = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
     public int resultsPerQuery = 10;
     public Map<String, SearchResult> searchResults; // query -> results
+    public List<String> errors;
+
 
     public Downloader(List<String> searchTerms) {
         this.searchResults = new HashMap<>();
+        this.errors = new ArrayList<>();
 
         // populate searchResults with terms -> null
         for (String searchTerm : searchTerms) {
@@ -106,6 +110,11 @@ public class Downloader {
 
         } catch (IOException e) {
             System.err.println("Error retrieving documentation for '" + url + "'");
+            errors.add("Error retrieving documentation for '" + url + "'");
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            System.err.println("Error retrieving class from " + url);
+            errors.add("Error retrieving class for '" + url + "'");
             e.printStackTrace();
         }
 
@@ -129,13 +138,14 @@ public class Downloader {
                 url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), "UTF-8");
 
                 // Skip packages and non http links
-                if (!url.startsWith("http") || url.contains("package-summary")) {
+                if (!url.startsWith("http") || url.contains("package-summary") || url.contains("packages.html") || url.contains("classes.html") || url.contains("gms-packages")) {
                     continue;
                 }
                 results.addResult(title, url);
             }
         } catch (IOException e) {
             System.err.println("Error retrieving search results for '" + query + "'");
+            errors.add("Error retrieving search results for '" + query + "'");
             e.printStackTrace();
         }
         return results;

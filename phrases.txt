@@ -1,0 +1,117 @@
+anonymized information
+ip address
+location
+operating system type
+anonymous user usage data
+browser type
+contacts
+country
+device type
+internet protocol
+ip addresses
+name
+technological information
+telephone number
+web request
+crash reports
+dump reports
+location information
+mcc
+statistics
+usage
+usages statistics
+version
+device identifiers
+log files
+sms messages
+advertising identifier
+geo-location information
+browser language
+crashes
+device-specific information
+event information
+gps
+hardware settings
+information
+search queries
+sensors
+system activity
+applications
+coarse location
+data
+device id
+hardware
+in-game information
+mac
+non-personal data
+software
+aggregated data
+aggregated user data
+cookies
+demographic patterns
+device's udid
+devices
+mobile device
+mobile device identifiers
+session data
+tablet
+web browser software information
+clicks
+geo-location
+mac address
+operating system
+page views
+posted reviews
+searches
+taps
+analytics information
+device
+device identifier
+location data
+log file information
+web pages
+access times
+browser information
+log information
+scores
+access devices
+browser types
+chat text
+device's mac address
+domain names
+landing pages
+physical location
+platform type
+possibly ip address
+similar information
+technical information
+urls
+voice communications
+general geographic location
+phone number
+device's internet protocol
+real-time location-based information
+bandwidth
+carrier network
+device capability
+device model number
+manufacturer's name
+platform
+file requested
+internet service provider
+unique identifier
+unique identifiers
+domain servers
+operating system information
+telecommunications carrier information
+unique device identifiers
+geographic data
+high-level geographic information
+spotify application version
+technical data
+third party applications
+transactional information enabling digital rights management
+unique device id
+internet protocol address
+mobile device model
+unique browser

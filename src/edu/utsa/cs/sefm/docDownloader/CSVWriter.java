@@ -43,7 +43,7 @@ public class CSVWriter {
     public void addRow(String[] row) {
         String newRow = "";
         for (String cell : row) {
-            cell = "\"" + cell + "\"";
+            cell = "\"" + cell.replaceAll("\"", "'") + "\"";
             if (newRow.length() < 1)
                 newRow = cell;
             else

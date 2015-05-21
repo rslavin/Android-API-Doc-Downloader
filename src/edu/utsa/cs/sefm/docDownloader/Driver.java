@@ -3,10 +3,9 @@ package edu.utsa.cs.sefm.docDownloader;
 import edu.utsa.cs.sefm.docDownloader.htmlObject.ClassDocumentation;
 import edu.utsa.cs.sefm.docDownloader.htmlObject.SearchResult;
 
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -15,17 +14,21 @@ import java.util.Map;
 public class Driver {
 
     public static void main(String[] args) {
-        List<String> searchTerms = new ArrayList<>();
-        String filename = "output";
-        searchTerms.add("location");
+        String outFile = "output";
+        String phraseFile = "phrases.txt";
 
-        Downloader downloader = new Downloader(searchTerms);
-
+        Downloader downloader = null;
+        try {
+            downloader = new Downloader(getPhrases(phraseFile));
+        } catch (IOException e) {
+            System.err.println("Unable to open phrase file");
+            e.printStackTrace();
+        }
         downloader.download();
 
         try {
-            createCSV(downloader, filename);
-            createReport(downloader, filename);
+            createCSV(downloader, outFile);
+            createReport(downloader, outFile);
         } catch (IOException e) {
             System.err.println("Unable to write csv file");
             e.printStackTrace();
@@ -72,8 +75,32 @@ public class Driver {
             }
             fw.append("\n\n");
         }
+        fw.append("Retrieval errors:");
+        for (String error : dl.errors)
+            fw.append("\n  Error: " + error);
         fw.flush();
         fw.close();
     }
 
+    /**
+     * Reads phrases from input file into ArrayList line by line.
+     *
+     * @param filePath Location of phrase file.
+     * @return ArrayList of phrases.
+     * @throws IOException
+     */
+    private static ArrayList<String> getPhrases(String filePath) throws IOException {
+        File file = new File(filePath);
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        String line;
+        ArrayList<String> phrases = new ArrayList<String>();
+        while ((line = br.readLine()) != null)
+            phrases.addAll(Arrays.asList(line.replace("\n", "").replace("\r", "").toLowerCase().split(",")));
+
+        br.close();
+        while (phrases.remove(" ")) ;
+        for (int i = 0; i < phrases.size(); i++)
+            phrases.set(i, phrases.get(i).trim());
+        return phrases;
+    }
 }
