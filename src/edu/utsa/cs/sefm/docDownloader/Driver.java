@@ -17,6 +17,8 @@ public class Driver {
         String outFile = "output";
         String phraseFile = "phrases.txt";
 
+        // TODO map phrases to apis
+
         Downloader downloader = null;
         try {
             downloader = new Downloader(getPhrases(phraseFile));
