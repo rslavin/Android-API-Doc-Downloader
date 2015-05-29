@@ -1,4 +1,4 @@
-package edu.utsa.cs.sefm.docDownloader;
+package edu.utsa.cs.sefm.docDownloader.utils;
 
 import java.io.FileWriter;
 import java.io.IOException;

@@ -2,8 +2,11 @@ package edu.utsa.cs.sefm.docDownloader;
 
 import edu.utsa.cs.sefm.docDownloader.htmlObject.ClassDocumentation;
 import edu.utsa.cs.sefm.docDownloader.htmlObject.SearchResult;
+import edu.utsa.cs.sefm.docDownloader.utils.CSVWriter;
+import edu.utsa.cs.sefm.docDownloader.utils.MySQLConnection;
 
 import java.io.*;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -17,9 +20,19 @@ public class Driver {
         String outFile = "output";
         String phraseFile = "phrases.txt";
 
+        String mysqlHost = "jdbc:mysql://192.168.1.200:3306/sefm_android";
+        String mysqlUser = "sefm_android";
+        String mysqlPass = "sNfdNn7mFtHd76DD";
+
         // TODO map phrases to apis
 
-        Downloader downloader = null;
+        MySQLConnection sql = new MySQLConnection(mysqlHost, mysqlUser, mysqlPass);
+        try {
+            sql.insert("INSERT INTO test (testcolumn) VALUES ('hello world')");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        /*Downloader downloader = null;
         try {
             downloader = new Downloader(getPhrases(phraseFile));
         } catch (IOException e) {
@@ -34,7 +47,7 @@ public class Driver {
         } catch (IOException e) {
             System.err.println("Unable to write csv file");
             e.printStackTrace();
-        }
+        }*/
     }
 
     private static void createCSV(Downloader dl, String filename) throws IOException {
