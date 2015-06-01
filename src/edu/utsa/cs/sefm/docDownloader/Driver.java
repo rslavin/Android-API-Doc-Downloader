@@ -6,9 +6,11 @@ import edu.utsa.cs.sefm.docDownloader.utils.CSVWriter;
 import edu.utsa.cs.sefm.docDownloader.utils.MySQLConnection;
 
 import java.io.*;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,23 +27,22 @@ public class Driver {
         String mysqlPass = "sNfdNn7mFtHd76DD";
 
         // TODO map phrases to apis
+        List<String> phraseList = new ArrayList<>();
+        phraseList.add("location");
+
 
         MySQLConnection sql = new MySQLConnection(mysqlHost, mysqlUser, mysqlPass);
-        try {
-            sql.insert("INSERT INTO test (testcolumn) VALUES ('hello world')");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        /*Downloader downloader = null;
-        try {
-            downloader = new Downloader(getPhrases(phraseFile));
-        } catch (IOException e) {
-            System.err.println("Unable to open phrase file");
-            e.printStackTrace();
-        }
+        Downloader downloader = null;
+//        try {
+        downloader = new Downloader(phraseList);//getPhrases(phraseFile));
+//        } catch (IOException e) {
+//            System.err.println("Unable to open phrase file");
+//            e.printStackTrace();
+//        }
         downloader.download();
+        updateDB(downloader, sql);
 
-        try {
+        /*try {
             createCSV(downloader, outFile);
             createReport(downloader, outFile);
         } catch (IOException e) {
@@ -69,6 +70,37 @@ public class Driver {
             }
         }
         csv.writeFile();
+    }
+
+    private static void updateDB(Downloader dl, MySQLConnection sql) {
+        try {
+            for (Map.Entry<String, SearchResult> search : dl.searchResults.entrySet()) {
+                String searchTerm = search.getKey();
+                int termID = sql.getID("search_terms", "term", sql.escapeSQL(searchTerm));
+                if (termID < 0)
+                    termID = sql.insert("INSERT INTO search_terms (term) VALUES ('" + sql.escapeSQL(searchTerm) + "')");
+                for (ClassDocumentation classDoc : search.getValue().pages) {
+                    // check if the class doc has already been inserted
+                    ResultSet existingDoc = sql.select("SELECT id FROM class_docs WHERE url = '" + sql.escapeSQL(classDoc.url) + "'");
+                    int classID = sql.getID("class_docs", "url", sql.escapeSQL(classDoc.url));
+                    if (classID < 0) {
+                        // if the class doc is new, insert it
+                        classID = sql.insert("INSERT INTO class_docs (name, url, description) VALUES ('" + sql.escapeSQL(classDoc.name) + "', '" + sql.escapeSQL(classDoc.url) + "', '" + sql.escapeSQL(classDoc.getOverview()) + "')");
+                    }
+                    existingDoc.close();
+                    // create relationship
+                    sql.insert("INSERT INTO search_class_relation (term_id, class_doc_id) VALUES ('" + termID + "', '" + classID + "')");
+                    // insert the class' methods
+                    for (Map.Entry<String, String> method : classDoc.publicMethods.entrySet()) {
+                        System.out.println("INSERT INTO method_docs (method, description, class_id) VALUES ('" + sql.escapeSQL(method.getKey()) + "', '" + sql.escapeSQL(method.getValue()) + "', '" + classID + "')");
+                        sql.insert("INSERT INTO method_docs (method, description, class_id) VALUES ('" + sql.escapeSQL(method.getKey()) + "', '" + sql.escapeSQL(method.getValue()) + "', '" + classID + "')");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private static void createReport(Downloader dl, String filename) throws IOException {
