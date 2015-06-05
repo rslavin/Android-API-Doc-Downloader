@@ -10,6 +10,7 @@ public class ClassDocumentation {
     public String name;
     public String url;
     public Map<String, String> publicMethods; // methodSig -> description
+    public Map<String, String> publicFields; // field -> description
     private String overview;
 
     public ClassDocumentation(String url) {
@@ -17,6 +18,7 @@ public class ClassDocumentation {
         this.name = "no name";
         this.url = url;
         this.publicMethods = new HashMap<>();
+        this.publicFields = new HashMap<>();
     }
 
     public String getOverview() {
@@ -29,6 +31,10 @@ public class ClassDocumentation {
 
     public void addMethod(String method, String description) {
         publicMethods.put(method, description);
+    }
+
+    public void addField(String field, String description) {
+        publicFields.put(field, description);
     }
 
     public void printMethods() {

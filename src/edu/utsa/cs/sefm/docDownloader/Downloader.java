@@ -24,7 +24,7 @@ public class Downloader {
     private static String google = "http://www.google.com/";
     private static String site = "+site:http:%2F%2Fdeveloper.android.com%2Freference%2F";
     private static String userAgent = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
-    public int resultsPerQuery = 3;
+    public int resultsPerQuery = 10;
     public Map<String, SearchResult> searchResults; // query -> results
     public List<String> errors;
 
@@ -37,6 +37,7 @@ public class Downloader {
         for (String searchTerm : searchTerms) {
             searchResults.put(searchTerm, null);
         }
+
     }
 
     public void download() {
@@ -46,6 +47,20 @@ public class Downloader {
             // download each result and add them to the SearchResult object
             for (Map.Entry<String, String> result : query.getValue().results.entrySet()) {
                 query.getValue().addPage(getDoc(result.getValue()));
+                try {
+                    //sleep 2 seconds
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    System.err.println("error sleeping");
+                    e.printStackTrace();
+                }
+            }
+            try {
+                //sleep 15 seconds
+                Thread.sleep(15000);
+            } catch (InterruptedException e) {
+                System.err.println("error sleeping");
+                e.printStackTrace();
             }
         }
     }
@@ -108,6 +123,27 @@ public class Downloader {
                 doc.addMethod(methodName + methodParam, Jsoup.clean(methodDescription, Whitelist.none()));
             }
 
+            // get Fields
+            Elements fieldsTable = page.select("[id=\"lfields\"] [class*=api]");
+
+            Pattern fieldNamePattern = Pattern.compile("\"*>([^>]+)<\\/a");
+            Pattern fieldDescriptionPattern = Pattern.compile("%\">\\s*(.+)<\\/td", Pattern.DOTALL);
+            for (Element rawField : fieldsTable) {
+                // get method name
+                Matcher m = fieldNamePattern.matcher(rawField.toString());
+                String fieldName = "no name";
+                while (m.find())
+                    fieldName = m.group(1);
+
+                // get method description
+                m = fieldDescriptionPattern.matcher(rawField.toString());
+                String fieldDescription = "no description";
+                while (m.find())
+                    fieldDescription = m.group(1);
+
+                doc.addField(fieldName, Jsoup.clean(fieldDescription, Whitelist.none()));
+            }
+
         } catch (IOException e) {
             System.err.println("Error retrieving documentation for '" + url + "'");
             errors.add("Error retrieving documentation for '" + url + "'");
@@ -130,6 +166,7 @@ public class Downloader {
     private SearchResult search(String query) {
         SearchResult results = new SearchResult(query);
         try {
+            System.out.println("Retrieving: " + google + queryString(query) + site + "&num=" + resultsPerQuery);
             Elements links = Jsoup.connect(google + queryString(query) + site + "&num=" + resultsPerQuery).userAgent(userAgent).referrer(google).get().select("li.g>h3>a");
 
             for (Element link : links) {
