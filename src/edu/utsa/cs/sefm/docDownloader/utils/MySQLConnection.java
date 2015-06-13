@@ -18,7 +18,9 @@ public class MySQLConnection {
     }
 
     public static String escapeSQL(String string) {
-        return string.replaceAll("'", "''");
+        if (string != null)
+            return string.replaceAll("'", "''");
+        return "";
     }
 
     /**
@@ -51,6 +53,7 @@ public class MySQLConnection {
             Connection con = DriverManager.getConnection(host, user, pass);
             Statement stm = con.createStatement();
             ResultSet ret = stm.executeQuery("SELECT id FROM " + table + " WHERE " + key + " = '" + value + "'");
+            System.err.println("ID QUERY: SELECT id FROM " + table + " WHERE " + key + " = '" + value + "'");
             while (ret.next())
                 return ret.getInt("id");
         } catch (SQLException e) {

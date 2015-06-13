@@ -13,17 +13,17 @@ gps
 coarse location
 device id
 mac
-device's udid
+udid
 mobile device identifiers
 geo-location
 mac address
 device identifier
 location data
-device's mac address
+mac address
 physical location
 general geographic location
 phone number
-device's internet protocol
+internet protocol
 real-time location-based information
 bandwidth
 carrier network

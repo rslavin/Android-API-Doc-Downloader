@@ -49,15 +49,15 @@ public class Downloader {
                 query.getValue().addPage(getDoc(result.getValue()));
                 try {
                     //sleep 2 seconds
-                    Thread.sleep(2000);
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     System.err.println("error sleeping");
                     e.printStackTrace();
                 }
             }
             try {
-                //sleep 15 seconds
-                Thread.sleep(15000);
+                //sleep 3 seconds
+                Thread.sleep(3000);
             } catch (InterruptedException e) {
                 System.err.println("error sleeping");
                 e.printStackTrace();
@@ -83,9 +83,10 @@ public class Downloader {
      */
     private ClassDocumentation getDoc(String url) {
         ClassDocumentation doc = new ClassDocumentation(url);
+        Document page;
         try {
             // get page
-            Document page = Jsoup.connect(url).get();
+            page = Jsoup.connect(url).get();
 
             // get Class Inheritance
             Element className = page.select("[class=\"jd-inheritance-class-cell\"").last();
@@ -148,6 +149,8 @@ public class Downloader {
             System.err.println("Error retrieving documentation for '" + url + "'");
             errors.add("Error retrieving documentation for '" + url + "'");
             e.printStackTrace();
+            System.err.println("retrying...");
+            this.getDoc(url);
         } catch (NullPointerException e) {
             System.err.println("Error retrieving class from " + url);
             errors.add("Error retrieving class for '" + url + "'");
@@ -184,6 +187,8 @@ public class Downloader {
             System.err.println("Error retrieving search results for '" + query + "'");
             errors.add("Error retrieving search results for '" + query + "'");
             e.printStackTrace();
+            System.err.println("retrying...");
+            return this.search(query);
         }
         return results;
     }

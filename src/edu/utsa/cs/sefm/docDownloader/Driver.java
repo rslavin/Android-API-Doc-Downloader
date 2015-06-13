@@ -9,6 +9,7 @@ import java.io.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,8 +26,9 @@ public class Driver {
         String mysqlPass = "sNfdNn7mFtHd76DD";
 
         // TODO map phrases to apis
-//        List<String> phraseList = new ArrayList<>();
-//        phraseList.add("mcc");
+        List<String> phraseList = new ArrayList<>();
+        phraseList.add("mcc");
+        phraseList.add("location information");
 
 
         MySQLConnection sql = new MySQLConnection(mysqlHost, mysqlUser, mysqlPass);
@@ -77,23 +79,45 @@ public class Driver {
             for (Map.Entry<String, SearchResult> search : dl.searchResults.entrySet()) {
                 String searchTerm = search.getKey();
                 int termID = sql.getID("search_terms", "term", sql.escapeSQL(searchTerm));
-                if (termID < 0)
-                    termID = sql.insert("INSERT INTO search_terms (term) VALUES ('" + sql.escapeSQL(searchTerm) + "')");
+                if (termID < 0) {
+                    sql.insert("INSERT INTO search_terms (term) VALUES ('" + sql.escapeSQL(searchTerm) + "')");
+                    termID = sql.getID("search_terms", "term", sql.escapeSQL(searchTerm));
+                }
+                System.out.println("term: " + search + ", termID: " + termID + ", classes: " + search.getValue().pages.size());
                 for (ClassDocumentation classDoc : search.getValue().pages) {
                     // check if the class doc has already been inserted
 //                    ResultSet existingDoc = sql.select("SELECT id FROM class_docs WHERE url = '" + sql.escapeSQL(classDoc.url) + "'");
                     int classID = sql.getID("class_docs", "url", sql.escapeSQL(classDoc.url));
                     if (classID < 0) {
+                        System.out.println(" less than zero");
                         // if the class doc is new, insert it
-                        classID = sql.insert("INSERT INTO class_docs (name, url, description) VALUES ('" + sql.escapeSQL(classDoc.name) + "', '" + sql.escapeSQL(classDoc.url) + "', '" + sql.escapeSQL(classDoc.getOverview()) + "')");
+                        String classDescription = sql.escapeSQL(classDoc.getOverview());
+                        if (classDescription.length() >= 4095)
+                            classDescription = classDescription.substring(0, 4095); // tiny chance of escaped quotes being broken
+                        String className = sql.escapeSQL(classDoc.name);
+                        if (className.length() >= 511)
+                            className = className.substring(0, 511); // tiny chance of escaped quotes being broken
+                        String classURL = sql.escapeSQL(classDoc.url);
+                        if (classURL.length() >= 255)
+                            classURL = classURL.substring(0, 255); // tiny chance of escaped quotes being broken
+                        sql.insert("INSERT INTO class_docs (name, url, description) VALUES ('" + className + "', '" + classURL + "', '" + classDescription + "')");
+                        classID = sql.getID("class_docs", "url", sql.escapeSQL(classDoc.url));
+                        System.out.println("\tclass: " + classDoc.name + ", classID: " + classID + ", class url: " + classURL);
                     }
 //                    existingDoc.close();
                     // create relationship
                     sql.insert("INSERT INTO search_class_relation (term_id, class_doc_id) VALUES ('" + termID + "', '" + classID + "')");
+                    System.out.println("\tINSERT INTO search_class_relation (term_id, class_doc_id) VALUES ('" + termID + "', '" + classID + "')");
                     // insert the class' methods
                     for (Map.Entry<String, String> method : classDoc.publicMethods.entrySet()) {
-//                        System.out.println("INSERT INTO method_docs (method, description, class_id) VALUES ('" + sql.escapeSQL(method.getKey()) + "', '" + sql.escapeSQL(method.getValue()) + "', '" + classID + "')");
-                        sql.insert("INSERT INTO method_docs (method, description, class_id) VALUES ('" + sql.escapeSQL(method.getKey()) + "', '" + sql.escapeSQL(method.getValue()) + "', '" + classID + "')");
+                        String methodName = sql.escapeSQL(method.getKey());
+                        if (methodName.length() >= 511)
+                            methodName = methodName.substring(0, 511);
+                        String methodDesc = sql.escapeSQL(method.getValue());
+                        if (methodDesc.length() >= 1027)
+                            methodDesc = methodDesc.substring(0, 1027);
+                        sql.insert("INSERT INTO method_docs (method, description, class_id) VALUES ('" + methodName + "', '" + methodDesc + "', '" + classID + "')");
+                        System.out.println("\t\tINSERT INTO method_docs (method, description, class_id) VALUES ('" + methodName + "', '" + methodDesc + "', '" + classID + "')");
                     }
                 }
             }
