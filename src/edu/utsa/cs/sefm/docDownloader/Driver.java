@@ -119,6 +119,17 @@ public class Driver {
                         sql.insert("INSERT INTO method_docs (method, description, class_id) VALUES ('" + methodName + "', '" + methodDesc + "', '" + classID + "')");
                         System.out.println("\t\tINSERT INTO method_docs (method, description, class_id) VALUES ('" + methodName + "', '" + methodDesc + "', '" + classID + "')");
                     }
+                    // insert the class' methods
+                    for (Map.Entry<String, String> field : classDoc.publicFields.entrySet()) {
+                        String fieldName = sql.escapeSQL(field.getKey());
+                        if (fieldName.length() >= 511)
+                            fieldName = fieldName.substring(0, 511);
+                        String fieldDesc = sql.escapeSQL(field.getValue());
+                        if (fieldDesc.length() >= 1027)
+                            fieldDesc = fieldDesc.substring(0, 1027);
+                        sql.insert("INSERT INTO field_docs (field, description, class_id) VALUES ('" + fieldName + "', '" + fieldDesc + "', '" + classID + "')");
+                        System.out.println("\t\tINSERT INTO field_docs (field, description, class_id) VALUES ('" + fieldName + "', '" + fieldDesc + "', '" + classID + "')");
+                    }
                 }
             }
         } catch (SQLException e) {
