@@ -8,6 +8,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ public class Downloader {
     private static String google = "http://www.google.com/";
     private static String site = "+site:http:%2F%2Fdeveloper.android.com%2Freference%2F";
     private static String userAgent = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
+    private static String docPath = "C:\\Users\\Rocky\\AppData\\Local\\Android\\sdk\\docs\\reference";
     public int resultsPerQuery = 10;
     public Map<String, SearchResult> searchResults; // query -> results
     public List<String> errors;
@@ -46,7 +48,7 @@ public class Downloader {
             searchResults.put(query.getKey(), search(query.getKey()));
             // download each result and add them to the SearchResult object
             for (Map.Entry<String, String> result : query.getValue().results.entrySet()) {
-                query.getValue().addPage(getDoc(result.getValue()));
+                query.getValue().addPage(getDoc(result.getValue(), false));
                 try {
                     //sleep 2 seconds
                     Thread.sleep(1000);
@@ -65,6 +67,15 @@ public class Downloader {
         }
     }
 
+    public void docSearch() {
+        // get results for each query
+        for (Map.Entry<String, SearchResult> query : searchResults.entrySet()) {
+            // text search for each query and add the file lists
+            searchResults.put(query.getKey(), textSearch(query.getKey()));
+        }
+    }
+
+
     /**
      * Prints all SearchResults
      */
@@ -81,12 +92,15 @@ public class Downloader {
      * @param url URL pointing to class documentation.
      * @return
      */
-    private ClassDocumentation getDoc(String url) {
+    private ClassDocumentation getDoc(String url, boolean isFile) {
         ClassDocumentation doc = new ClassDocumentation(url);
         Document page;
         try {
             // get page
-            page = Jsoup.connect(url).get();
+            if (isFile)
+                page = Jsoup.parse(new File(url), "UTF-8", "");
+            else
+                page = Jsoup.connect(url).get();
 
             // get Class Inheritance
             Element className = page.select("[class=\"jd-inheritance-class-cell\"").last();
@@ -150,7 +164,7 @@ public class Downloader {
             errors.add("Error retrieving documentation for '" + url + "'");
             e.printStackTrace();
             System.err.println("retrying...");
-            this.getDoc(url);
+            this.getDoc(url, isFile);
         } catch (NullPointerException e) {
             System.err.println("Error retrieving class from " + url);
             errors.add("Error retrieving class for '" + url + "'");
@@ -193,6 +207,53 @@ public class Downloader {
         return results;
     }
 
+    /**
+     * Creates a SearchResult containing doc locations based on a search term.
+     *
+     * @param query
+     * @return
+     */
+    private SearchResult textSearch(String query) {
+        SearchResult results = new SearchResult(query);
+        // get all html files
+        List<File> htmlFiles = new ArrayList<>();
+        getHtmlFiles(docPath, htmlFiles);
+        // for every file, check if it has the query in it
+        for (File file : htmlFiles) {
+            try {
+                Document htmlFile = Jsoup.parse(file, "UTF-8", "");
+                Element classDescr = htmlFile.select("[class=\"jd-descr\"").first();
+                if (classDescr != null && classDescr.text().toLowerCase().contains(query.toLowerCase()))
+                    results.addPage(getDoc(file.getAbsolutePath(), true));
+            } catch (Exception e) {
+                System.err.println("Error reading file: " + file.getName());
+                e.printStackTrace();
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * Updates files List to contain all html files under the directory.
+     *
+     * @param path
+     * @param files
+     */
+    private void getHtmlFiles(String path, List<File> files) {
+        File currentDirectory = new File(path);
+
+        File[] fileList = currentDirectory.listFiles();
+        for (File file : fileList) {
+            if (file.isFile()) {
+                String fileName = file.getName();
+                int i = fileName.lastIndexOf('.');
+                if (i >= 0 && fileName.substring(i + 1).equals("html"))
+                    files.add(file);
+            } else if (file.isDirectory())
+                getHtmlFiles(file.getAbsolutePath(), files);
+        }
+    }
     /**
      * Encodes a search term into a valid query variable.
      *

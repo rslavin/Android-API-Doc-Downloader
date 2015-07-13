@@ -18,7 +18,7 @@ import java.util.Map;
 public class Driver {
 
     public static void main(String[] args) {
-        String outFile = "output";
+        String outFile = "outputTEXT_SEARCH";
         String phraseFile = "phrases.txt";
 
         String mysqlHost = "jdbc:mysql://192.168.1.200:3306/sefm_android";
@@ -39,8 +39,9 @@ public class Driver {
             System.err.println("Unable to open phrase file");
             e.printStackTrace();
         }
-        downloader.download();
-        updateDB(downloader, sql);
+//        downloader.download();
+        downloader.docSearch();
+        //updateDB(downloader, sql);
 
         try {
             createCSV(downloader, outFile);
