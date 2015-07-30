@@ -25,13 +25,17 @@ public class Downloader {
     private static String google = "http://www.google.com/";
     private static String site = "+site:http:%2F%2Fdeveloper.android.com%2Freference%2F";
     private static String userAgent = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
-    private static String docPath = "C:\\Users\\Rocky\\AppData\\Local\\Android\\sdk\\docs\\reference";
+    
+    private static String docPath = "C:\\Users\\James\\Desktop\\docs\\reference";
+    private static List<File> htmlFiles = new ArrayList<>();
+    private static ArrayList<Document> htmlDocs = new ArrayList<>();    
     public int resultsPerQuery = 10;
     public Map<String, SearchResult> searchResults; // query -> results
     public List<String> errors;
 
 
     public Downloader(List<String> searchTerms) {
+    	
         this.searchResults = new HashMap<>();
         this.errors = new ArrayList<>();
 
@@ -83,6 +87,9 @@ public class Downloader {
         for (Map.Entry<String, SearchResult> result : searchResults.entrySet()) {
             System.out.println("\n##### New Search #####");
             System.out.println(result.getValue());
+            for(ClassDocumentation doc : result.getValue().pages) {
+            	System.out.println(doc.name);
+            }
         }
     }
 
@@ -93,15 +100,24 @@ public class Downloader {
      * @return
      */
     private ClassDocumentation getDoc(String url, boolean isFile) {
+        // get page
+    	try {
+        if (isFile)
+            return getDoc(url, Jsoup.parse(new File(url), "UTF-8", ""));
+        else
+            return getDoc(url, Jsoup.connect(url).timeout(10000).get()); /////
+        } catch (IOException e) {
+            System.err.println("Error retrieving documentation for '" + url + "'");
+            errors.add("Error retrieving documentation for '" + url + "'");
+            e.printStackTrace();
+            System.err.println("retrying...");
+            return this.getDoc(url, isFile);
+        }
+    }
+    
+    private ClassDocumentation getDoc(String url, Document page) {
         ClassDocumentation doc = new ClassDocumentation(url);
-        Document page;
         try {
-            // get page
-            if (isFile)
-                page = Jsoup.parse(new File(url), "UTF-8", "");
-            else
-                page = Jsoup.connect(url).get();
-
             // get Class Inheritance
             Element className = page.select("[class=\"jd-inheritance-class-cell\"").last();
             doc.name = Jsoup.clean(className.toString(), Whitelist.none());
@@ -158,13 +174,6 @@ public class Downloader {
 
                 doc.addField(fieldName, Jsoup.clean(fieldDescription, Whitelist.none()));
             }
-
-        } catch (IOException e) {
-            System.err.println("Error retrieving documentation for '" + url + "'");
-            errors.add("Error retrieving documentation for '" + url + "'");
-            e.printStackTrace();
-            System.err.println("retrying...");
-            this.getDoc(url, isFile);
         } catch (NullPointerException e) {
             System.err.println("Error retrieving class from " + url);
             errors.add("Error retrieving class for '" + url + "'");
@@ -214,33 +223,59 @@ public class Downloader {
      * @return
      */
     private SearchResult textSearch(String query) {
+    	getHtmlFiles(docPath, htmlFiles);    // get all html files
+    	System.err.print("Parsing HTML files");
+    	int progressIndicator = 0;
+        for(File file : htmlFiles) {
+        	if (progressIndicator++ % 50 == 0)
+        		System.err.print(".");
+    		try {
+    			htmlDocs.add(Jsoup.parse(file, "UTF-8", ""));
+    		} catch (IOException e1) {
+                System.err.println("Error parsing file: " + file.getName());
+                e1.printStackTrace();
+    		}
+        }
+        System.err.println();
+    	
+    	System.out.print("Searching files for " + query);
         SearchResult results = new SearchResult(query);
-        // get all html files
-        List<File> htmlFiles = new ArrayList<>();
-        getHtmlFiles(docPath, htmlFiles);
+                
         // for every file, check if it has the query in it
-        for (File file : htmlFiles) {
+        for (int i = 0; i < htmlFiles.size(); i++) {
             try {
-                Document htmlFile = Jsoup.parse(file, "UTF-8", "");
-                Element classDescr = htmlFile.select("[class=\"jd-descr\"").first();
-                if (classDescr != null && classDescr.text().toLowerCase().contains(query.toLowerCase()))
-                    results.addPage(getDoc(file.getAbsolutePath(), true));
+                Document doc = htmlDocs.get(i);
+                //Element classDescr = doc.select("[class=\"jd-descr\"").first();
+                //if (classDescr != null && classDescr.text().toLowerCase().contains(query.toLowerCase()))
+                if (doc.text().toLowerCase().contains(query.toLowerCase()))
+                {
+                	ClassDocumentation result = getDoc(htmlFiles.get(i).getAbsolutePath(), htmlDocs.get(i));
+                	result.addOriginalHTML(doc);
+                    results.addPage(result);
+                	System.out.print(".");
+                }
             } catch (Exception e) {
-                System.err.println("Error reading file: " + file.getName());
+                System.err.println("Error reading file: " + htmlFiles.get(i).getName());
                 e.printStackTrace();
             }
         }
-
+        System.out.println();
+        System.out.print("Pruning...");
+        results.pruneByTFIDF(10);
+        System.out.println("complete.");
+        
         return results;
     }
 
+    
+    
     /**
      * Updates files List to contain all html files under the directory.
      *
      * @param path
      * @param files
      */
-    private void getHtmlFiles(String path, List<File> files) {
+    private static void getHtmlFiles(String path, List<File> files) {
         File currentDirectory = new File(path);
 
         File[] fileList = currentDirectory.listFiles();

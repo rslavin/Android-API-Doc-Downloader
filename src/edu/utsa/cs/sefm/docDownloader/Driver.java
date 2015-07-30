@@ -18,7 +18,7 @@ import java.util.Map;
 public class Driver {
 
     public static void main(String[] args) {
-        String outFile = "outputTEXT_SEARCH";
+        String outFile = "output";
         String phraseFile = "phrases.txt";
 
         String mysqlHost = "jdbc:mysql://192.168.1.200:3306/sefm_android";
@@ -31,16 +31,20 @@ public class Driver {
         phraseList.add("location information");
 
 
-        MySQLConnection sql = new MySQLConnection(mysqlHost, mysqlUser, mysqlPass);
+        //MySQLConnection sql = new MySQLConnection(mysqlHost, mysqlUser, mysqlPass);
         Downloader downloader = null;
         try {
             downloader = new Downloader(getPhrases(phraseFile));
         } catch (IOException e) {
             System.err.println("Unable to open phrase file");
             e.printStackTrace();
+            return;
         }
-//        downloader.download();
+        //downloader.download();
+        
         downloader.docSearch();
+        downloader.printSearchResults();
+        System.exit(0);
         //updateDB(downloader, sql);
 
         try {
