@@ -136,19 +136,19 @@ public class Downloader {
                 // get method name
                 Matcher m = methodNamePattern.matcher(rawMethod.toString());
                 String methodName = "no name";
-                while (m.find())
+                if (m.find())
                     methodName = m.group(1);
 
                 // get method params
                 m = methodParametersPattern.matcher(rawMethod.toString());
                 String methodParam = "()";
-                while (m.find())
+                if (m.find())
                     methodParam = m.group(1);
 
                 // get method description
                 m = methodDescriptionPattern.matcher(rawMethod.toString());
                 String methodDescription = "no description";
-                while (m.find())
+                if (m.find())
                     methodDescription = m.group(1);
 
                 doc.addMethod(methodName + methodParam, Jsoup.clean(methodDescription, Whitelist.none()));
