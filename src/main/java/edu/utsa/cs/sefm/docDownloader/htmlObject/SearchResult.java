@@ -1,18 +1,12 @@
 package edu.utsa.cs.sefm.docDownloader.htmlObject;
 
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
 import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.ling.HasWord;
 import edu.stanford.nlp.process.CoreLabelTokenFactory;
-import edu.stanford.nlp.process.DocumentPreprocessor;
 import edu.stanford.nlp.process.PTBTokenizer;
 import edu.utsa.cs.sefm.utils.Calc;
+
+import java.io.StringReader;
+import java.util.*;
 
 /**
  * Created by Rocky on 5/20/2015.
